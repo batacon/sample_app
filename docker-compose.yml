@@ -1,0 +1,72 @@
+version: '3'
+services:
+  database:
+    image: postgres:9.6.9
+    volumes:
+      - database:/var/lib/postgresql/data
+    expose:
+      - 5432
+
+  # http:
+  #   build:
+  #     context: ./
+  #     dockerfile: ./docker/http/Dockerfile
+  #     args:
+  #       rails_env: 'development'
+  #   ports:
+  #     - 3000:80
+  #   volumes:
+  #     - common:/var/www/tmp/cache
+  #     - common:/var/www/tmp/uploads
+  #     - common:/var/www/tmp/sockets
+  #     - common:/var/www/tmp/pids
+  #     - ./public:/var/www/public
+  #   depends_on:
+  #     - application
+
+  application:
+    build:
+      context: ./
+      dockerfile: ./docker/application/Dockerfile
+    tty: true
+    stdin_open: true
+    volumes:
+      - .:/var/www:rw
+      - ./tmp:/var/www/tmp:rw
+      - bundle:/usr/local/bundle
+      - common:/var/www/tmp/cache
+      - common:/var/www/tmp/uploads
+      - common:/var/www/tmp/sockets
+      - common:/var/www/tmp/pids
+    command: >
+      /bin/sh -c
+      "mkdir -p /var/www/tmp/pids /var/www/tmp/sockets /var/www/tmp/cache && bundle exec puma"
+    depends_on:
+      - database
+    ports:
+      - 3000:3000
+
+  # assets:
+  #   build:
+  #     context: ./
+  #     dockerfile: ./docker/assets/Dockerfile
+  #     args:
+  #       webpack: 'false'
+  #   command: yarn run development
+  #   ports:
+  #     - 8080:8080
+  #     - 8888:8888
+  #   volumes:
+  #     - ./client/config:/var/www/client/config
+  #     - ./client/src:/var/www/client/src
+  #     - ./client/yarn.lock:/var/www/client/yarn.lock
+  #     - ./client/package.json:/var/www/client/package.json
+  #     - ./client/.sass-lint.yml:/var/www/client/.sass-lint.yml
+  #     - ./public/assets:/var/www/public/assets
+  #     - ./public:/var/www/public
+  #     - node_modules:/var/www/client/node_modules
+
+volumes:
+  common:
+  bundle:
+  database:
